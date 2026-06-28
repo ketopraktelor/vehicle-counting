@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual Environment
+venv/
+.venv/
+
+# Model
+best.pt
+last.pt
+
+# Output Video
+hasil-deteksi/
+hasil-tracking/
+hasil-counting/
+
+# YOLO Output
+runs/
+
+# Dataset
+dataset/
+datasets/
