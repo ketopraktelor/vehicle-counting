@@ -100,6 +100,13 @@ def style_sheet(ws):
             for cell in column_cells
         )
 
+    if column_cells[0].column_letter == "A":
+        ws.column_dimensions["A"].width = 38
+
+    elif column_cells[0].column_letter == "B":
+        ws.column_dimensions["B"].width = 45
+
+    else:
         ws.column_dimensions[
             column_cells[0].column_letter
         ].width = panjang + 5
@@ -249,15 +256,19 @@ def buat_sheet_perbandingan(workbook, df_jam_lancar, df_jam_sibuk):
 # ==========================================================
 def buat_sheet_ringkasan(workbook, df_jam_lancar, df_jam_sibuk):
     """
-    Membuat worksheet ringkasan hasil analisis.
+    Membuat worksheet ringkasan hasil perbandingan.
     """
+
     worksheet = workbook.create_sheet(title="Ringkasan")
 
+    # =====================================================
+    # HEADER TABEL
+    # =====================================================
     worksheet.append(["Keterangan", "Nilai"])
 
-    # ---------------------------------------
-    # Mengambil Total Kendaraan
-    # ---------------------------------------
+    # =====================================================
+    # TOTAL KENDARAAN
+    # =====================================================
     total_lancar = int(
         df_jam_lancar.loc[
             df_jam_lancar["Jenis Kendaraan"] == "Total",
@@ -272,9 +283,19 @@ def buat_sheet_ringkasan(workbook, df_jam_lancar, df_jam_sibuk):
         ].values[0]
     )
 
-    # ---------------------------------------
-    # Mengambil Kendaraan Terbanyak
-    # ---------------------------------------
+    # =====================================================
+    # SELISIH DAN PERSENTASE
+    # =====================================================
+    selisih = total_sibuk - total_lancar
+
+    if total_lancar != 0:
+        persentase = (selisih / total_lancar) * 100
+    else:
+        persentase = 0
+
+    # =====================================================
+    # KENDARAAN TERBANYAK
+    # =====================================================
     lancar = df_jam_lancar[
         df_jam_lancar["Jenis Kendaraan"] != "Total"
     ]
@@ -293,32 +314,9 @@ def buat_sheet_ringkasan(workbook, df_jam_lancar, df_jam_sibuk):
         "Jenis Kendaraan"
     ]
 
-    # ---------------------------------------
-    # Kesimpulan
-    # ---------------------------------------
-    if total_lancar > total_sibuk:
-
-        kesimpulan = (
-            "Kepadatan kendaraan pada jam lancar "
-            "lebih tinggi dibandingkan jam sibuk."
-        )
-
-    elif total_lancar < total_sibuk:
-
-        kesimpulan = (
-            "Kepadatan kendaraan pada jam sibuk "
-            "lebih tinggi dibandingkan jam lancar."
-        )
-
-    else:
-
-        kesimpulan = (
-            "Jumlah kendaraan pada kedua kondisi sama."
-        )
-
-    # ---------------------------------------
-    # Isi Worksheet
-    # ---------------------------------------
+    # =====================================================
+    # ISI TABEL
+    # =====================================================
     worksheet.append([
         "Total Kendaraan Jam Lancar",
         total_lancar
@@ -331,7 +329,12 @@ def buat_sheet_ringkasan(workbook, df_jam_lancar, df_jam_sibuk):
 
     worksheet.append([
         "Selisih Kendaraan",
-        total_sibuk - total_lancar
+        abs(selisih)
+    ])
+
+    worksheet.append([
+        "Persentase Perubahan",
+        f"{abs(persentase):.2f}%"
     ])
 
     worksheet.append([
@@ -344,12 +347,75 @@ def buat_sheet_ringkasan(workbook, df_jam_lancar, df_jam_sibuk):
         kendaraan_sibuk
     ])
 
-    worksheet.append([
-        "Kesimpulan",
-        kesimpulan
-    ])
-
+    # =====================================================
+    # STYLE TABEL PERTAMA
+    # =====================================================
     style_sheet(worksheet)
+
+    # =====================================================
+    # MEMBUAT KESIMPULAN
+    # =====================================================
+    if total_lancar > total_sibuk:
+
+        kesimpulan = (
+            f"Berdasarkan hasil perbandingan, jumlah kendaraan pada kondisi jam "
+            f"lancar adalah {total_lancar} kendaraan, sedangkan pada kondisi jam "
+            f"sibuk adalah {total_sibuk} kendaraan. Selisih jumlah kendaraan "
+            f"antara kedua kondisi tersebut adalah {abs(selisih)} kendaraan. "
+            f"Dengan demikian, kondisi jam lancar memiliki jumlah kendaraan "
+            f"yang lebih tinggi dibandingkan kondisi jam sibuk."
+        )
+
+    elif total_sibuk > total_lancar:
+
+        kesimpulan = (
+            f"Berdasarkan hasil perbandingan, jumlah kendaraan pada kondisi jam "
+            f"sibuk adalah {total_sibuk} kendaraan, sedangkan pada kondisi jam "
+            f"lancar adalah {total_lancar} kendaraan. Selisih jumlah kendaraan "
+            f"antara kedua kondisi tersebut adalah {abs(selisih)} kendaraan. "
+            f"Dengan demikian, kondisi jam sibuk memiliki jumlah kendaraan "
+            f"yang lebih tinggi dibandingkan kondisi jam lancar."
+        )
+
+    else:
+
+        kesimpulan = (
+            f"Berdasarkan hasil perbandingan, jumlah kendaraan pada kondisi jam "
+            f"lancar dan jam sibuk sama, yaitu {total_lancar} kendaraan."
+        )
+
+    # =====================================================
+    # TABEL KESIMPULAN
+    # =====================================================
+    worksheet.append([])
+    worksheet.append(["KESIMPULAN"])
+    worksheet.append([kesimpulan])
+
+    worksheet.merge_cells("A9:B9")
+    worksheet.merge_cells("A10:B10")
+
+    worksheet["A9"].fill = PatternFill(
+        fill_type="solid",
+        start_color="1F4E78"
+    )
+
+    worksheet["A9"].font = Font(
+        bold=True,
+        color="FFFFFF"
+    )
+
+    worksheet["A9"].alignment = Alignment(
+        horizontal="center",
+        vertical="center"
+    )
+
+    worksheet["A10"].alignment = Alignment(
+        horizontal="left",
+        vertical="top",
+        wrap_text=True
+    )
+
+    worksheet.row_dimensions[10].height = 80
 
 # ==========================================================
 # PROGRAM UTAMA
