@@ -9,13 +9,13 @@ from ultralytics import YOLO
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-model = YOLO(os.path.join(BASE_DIR, "best.pt"))
+model = YOLO(os.path.join(BASE_DIR, "model/best.pt"))
 
 # =========================
 # VIDEO INPUT
 # =========================
 
-video_file = "jam-lancar.mp4"
+video_file = "DATASET/jam_lancar.mp4"
 
 video_path = os.path.join(
     BASE_DIR,
@@ -34,12 +34,14 @@ fps = cap.get(cv2.CAP_PROP_FPS)
 
 output_dir = os.path.join(
     BASE_DIR,
-    "hasil-counting"
+    "hasil-counting-video"
 )
 
 os.makedirs(output_dir, exist_ok=True)
 
-video_name = os.path.splitext(video_file)[0]
+video_name = os.path.splitext(
+    os.path.basename(video_file)
+)[0]
 
 output_video = os.path.join(
     output_dir,
