@@ -1,102 +1,78 @@
 import subprocess
 import os
-from pathlib import Path
 
-# ==========================================================
-# KONFIGURASI
-# ==========================================================
+print("=" * 60)
+print("            CCTV VIDEO FEED RECORDER")
+print("=" * 60)
 
-STREAM_URL = "https://dishub.depok.go.id/vi/10109059.m3u8"
+url = input("URL M3U8              : ").strip()
 
-OUTPUT_FOLDER = "DATASET"
-
-# ==========================================================
-
-os.makedirs(OUTPUT_FOLDER, exist_ok=True)
-
-print("=" * 55)
-print("         CCTV VIDEO FEED RECORDER")
-print("=" * 55)
-print("1. Rekam Jam Sibuk")
-print("2. Rekam Jam Lancar")
-print("3. Custom")
-print("=" * 55)
-
-pilihan = input("Pilih menu (1/2/3): ").strip()
-
-if pilihan == "1":
-    filename = "jam_sibuk.mp4"
-
-elif pilihan == "2":
-    filename = "jam_lancar.mp4"
-
-elif pilihan == "3":
-
-    nama = input("Masukkan nama file : ").strip()
-
-    if not nama:
-        nama = "record"
-
-    if not nama.endswith(".mp4"):
-        nama += ".mp4"
-
-    filename = nama
-
-else:
-    print("Pilihan tidak valid.")
+if url == "":
+    print("URL tidak boleh kosong.")
     exit()
 
-# ==========================================================
+filename = input("Nama file (tanpa .mp4): ").strip()
+
+if filename == "":
+    filename = "record"
+
+folder = input("Folder penyimpanan (Enter = DATASET): ").strip()
+
+if folder == "":
+    folder = r"C:\Rekaman CCTV"
+
+os.makedirs(folder, exist_ok=True)
 
 try:
     menit = int(input("Durasi rekaman (menit): "))
-except:
-    print("Input durasi tidak valid.")
+except ValueError:
+    print("Durasi tidak valid.")
     exit()
 
-durasi = menit * 60
+output_file = os.path.join(folder, filename + ".mp4")
 
-output_path = os.path.join(OUTPUT_FOLDER, filename)
-
-print("\n" + "=" * 55)
-print("Memulai proses rekaman...")
-print("=" * 55)
-print(f"Source  : {STREAM_URL}")
-print(f"Output  : {output_path}")
-print(f"Durasi  : {menit} menit")
-print("=" * 55)
-print("\nTekan CTRL + C jika ingin menghentikan rekaman lebih awal.\n")
-
-# ==========================================================
-# COMMAND FFMPEG
-# ==========================================================
+print("\n")
+print("=" * 60)
+print("Mulai merekam...")
+print("=" * 60)
+print("Output :", output_file)
+print("Durasi :", menit, "menit")
+print("=" * 60)
+print()
 
 cmd = [
+
     "ffmpeg",
 
-    # Tampilan log
     "-hide_banner",
-    "-loglevel", "info",
 
-    # ===========================
-    # AUTO RECONNECT
-    # ===========================
+    "-loglevel", "warning",
+
+    # reconnect otomatis
     "-reconnect", "1",
     "-reconnect_streamed", "1",
     "-reconnect_at_eof", "1",
-    "-reconnect_on_network_error", "1",
-    "-reconnect_on_http_error", "4xx,5xx",
     "-reconnect_delay_max", "5",
 
     "-rw_timeout", "15000000",
 
-    # Input CCTV
-    "-i", STREAM_URL,
-    "-t", str(durasi),
-    "-c", "copy",
+    "-i", url,
+
+    "-t", str(menit * 60),
+
+    # Encode ulang supaya MP4 valid
+    "-c:v", "libx264",
+    "-preset", "veryfast",
+    "-crf", "23",
+
+    "-c:a", "aac",
+
+    "-movflags", "+faststart",
+
     "-y",
 
-    output_path
+    output_file
+
 ]
 
 try:
@@ -105,24 +81,21 @@ try:
 
 except KeyboardInterrupt:
 
-    print("\n\nRekaman dihentikan oleh pengguna.")
+    print("\nRekaman dihentikan.")
 
-# ==========================================================
-# HASIL
-# ==========================================================
+print("\n")
 
-print("\n" + "=" * 55)
+if os.path.exists(output_file):
 
-if os.path.exists(output_path):
+    size = os.path.getsize(output_file) / (1024 * 1024)
 
-    ukuran = os.path.getsize(output_path) / (1024 * 1024)
-
-    print("Rekaman berhasil disimpan.")
-    print(f"Lokasi File : {Path(output_path).resolve()}")
-    print(f"Ukuran File : {ukuran:.2f} MB")
+    print("=" * 60)
+    print("REKAMAN SELESAI")
+    print("=" * 60)
+    print("Lokasi :", os.path.abspath(output_file))
+    print(f"Ukuran : {size:.2f} MB")
+    print("=" * 60)
 
 else:
 
     print("Rekaman gagal.")
-
-print("=" * 55)
